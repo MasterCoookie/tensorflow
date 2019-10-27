@@ -18,6 +18,10 @@ So for the review that consists of words [5, 22] we are going to have a dictiona
 
 But there is another. Even simpler - limiting the num of words in a review.
 In this case to 256 chars. And if its less than 256 we are going to pad it.
+And thats a solition we are going to go with.
+
+The neuro network we've constructed has 2 hidden layers, and a max vocublary size of 10 000.
+We have also created 2 hidden layers in this network.
 '''
 from __future__ import absolute_import, division, print_function
 
@@ -63,14 +67,28 @@ WORD_INDEX["<UNUSED>"] = 3
 REVERSE_WORD_INDEX = dict([(value, key) for (key, value) in WORD_INDEX.items()])
 
 # testing the decoding form ints to eng
-print(decode_review(TRAIN_DATA[0]))
+#print(decode_review(TRAIN_DATA[0]))
 
 # padding the reviews if they are too short
 TRAIN_DATA = keras.preprocessing.sequence.pad_sequences(TRAIN_DATA,
                                                         value=WORD_INDEX["<PAD>"],
-                                                        padding="POST",
+                                                        padding="post",
                                                         maxlen=256)
 TEST_DATA = keras.preprocessing.sequence.pad_sequences(TEST_DATA,
                                                        value=WORD_INDEX["<PAD>"],
-                                                       padding="POST",
+                                                       padding="post",
                                                        maxlen=256)
+
+vocab_size = 10000
+
+# setting up the neuro network
+model = keras.Sequential()
+# inital layer
+model.add(keras.layers.Embedding(vocab_size, 16))
+#invisible layers
+model.add(keras.layers.GlobalAveragePooling1D())
+model.add(keras.layers.Dense(16, activation=tf.nn.relu))
+# final layer
+model.add(keras.layers.Dense(1, activation=tf.nn.sigmoid))
+
+model.summary()
