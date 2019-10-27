@@ -91,4 +91,29 @@ model.add(keras.layers.Dense(16, activation=tf.nn.relu))
 # final layer
 model.add(keras.layers.Dense(1, activation=tf.nn.sigmoid))
 
-model.summary()
+#model.summary()
+
+# usnig binary_crossentropy becouse the output is binary
+model.compile(optimizer="adam", loss="binary_crossentropy", metrics=["acc"])
+
+# training with the first 10 000 entires, than validating with the rest of train data
+# the goal is to use the test data only for testing
+x_val = TRAIN_DATA[:10000]
+partial_x_train = TRAIN_DATA[10000:]
+
+# same with labels
+y_val = TRAIN_LABELS[:10000]
+partial_y_train = TRAIN_LABELS[10000:]
+
+# training the model
+history = model.fit(partial_x_train,
+                    partial_y_train,
+                    epochs=40,
+                    batch_size=512,
+                    validation_data=(x_val, y_val),
+                    verbose=0)
+
+results = model.evaluate(TEST_DATA, TEST_LABELS)
+
+print(results)
+
