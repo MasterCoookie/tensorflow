@@ -1,20 +1,31 @@
 '''Learning to classify images using fashion mnist (Recognizing elements of clothing).
 
-While preping the data we need to change to remove the saturation, making each pixel either 0 or a 1.
+While preping the data we need to change to remove the saturation making each pixel either 0 or a 1.
 '''
+import PIL.ImageOps
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
+from skimage.io import imread
 from tensorflow import keras
 
 def show_img(img):
+    '''Shows a picture using matplotlib'''
     plt.figure()
     plt.imshow(img)
     plt.colorbar()
     plt.grid(False)
     plt.show()
 
+def img_to_array(title):
+    pic = Image.open(title).convert('L')
+    pic_resized = pic.resize((28, 28), Image.NEAREST)
+    pic_reversed = PIL.ImageOps.invert(pic_resized)
+    array_from_pic = np.array(pic_reversed)
+    array_from_pic = array_from_pic / 255.0
+    return array_from_pic.reshape(28, 28)
 
 FASHION_MNIST = keras.datasets.fashion_mnist
 
@@ -59,7 +70,13 @@ test_loss, test_acc = model.evaluate(test_images, test_labels)
 print("Test accuracy:", test_acc)
 
 # the cool part - making a prediction
-predictions = model.predict(test_images)
+image_uploaded = img_to_array('indeks.jpg')
+image_uploaded = np.array(image_uploaded)
+image_uploaded = image_uploaded[np.newaxis, :, :]
+predictions = model.predict(image_uploaded)
 
-print(CLASS_NAMES[np.argmax(predictions[0])])
-show_img(test_images[0])
+print("I think its", CLASS_NAMES[np.argmax(predictions[0])])
+show_img(image_uploaded[0])
+# show_img(test_images[0])
+# print(image_uploaded.shape)
+# print(train_images[0].shape)
