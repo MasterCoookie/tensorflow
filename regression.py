@@ -16,6 +16,16 @@ import seaborn as sns
 import tensorflow as tf
 from tensorflow import keras
 
+def convert(mpg):
+    '''converts miles per gallon to L/100km'''
+    liters_per_km = 100 / ((mpg * 1.609) / 4.546)
+    return liters_per_km
+
+def normalize(dset):
+    '''Normalize the data (z score)'''
+    return (dset - TRAIN_STATS["mean"]) / TRAIN_STATS["std"]
+
+
 # downloading the data
 DATASET_PATH = keras.utils.get_file("auto-mpg.data",
                                     "https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data")
@@ -52,4 +62,21 @@ dataset["Japan"] = (origin == 3) * 1.0
 
 
 # splitting the data
-TRAIN_DATASET = dataset.sample()
+TRAIN_DATASET = dataset.sample(frac=0.8, random_state=0)
+
+# exclude TRAIN DATA to create TEST DATA
+TEST_DATASET = dataset.drop(TRAIN_DATASET.index)
+
+# making a graph
+sns.pairplot(TRAIN_DATASET[["MPG", "Cylinders", "Displacement", "Weight"]], diag_kind="kde")
+# plt.show()
+
+# general statistics
+TRAIN_STATS = TRAIN_DATASET.describe()
+# remove MPG as we are trying to guess it
+TRAIN_STATS.pop("MPG")
+TRAIN_STATS = TRAIN_STATS.transpose()
+# print(TRAIN_STATS)
+
+NORMED_TRAIN_DATA = normalize(TRAIN_DATASET)
+NORMED_TEST_DATA = normalize(TEST_DATASET)
