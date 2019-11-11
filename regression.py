@@ -15,6 +15,7 @@ import seaborn as sns
 
 import tensorflow as tf
 from tensorflow import keras
+from sklearn.model_selection import train_test_split
 
 def convert(mpg):
     '''converts miles per gallon to L/100km'''
@@ -25,6 +26,17 @@ def normalize(dset):
     '''Normalize the data (z score)'''
     return (dset - TRAIN_STATS["mean"]) / TRAIN_STATS["std"]
 
+def build_model():
+    model_built = keras.Sequential([
+        keras.layers.Dense(64, activation="relu", input_shape=[len(X.keys())]),
+        keras.layers.Dense(64, activation="relu"),
+        keras.layers.Dense(1)
+    ])
+    optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.001)
+
+    model_built.compile(loss="mse", optimizer=optimizer, metrics=["mse", "mae"])
+
+    return model_built
 
 # downloading the data
 DATASET_PATH = keras.utils.get_file("auto-mpg.data",
@@ -61,22 +73,30 @@ dataset["Japan"] = (origin == 3) * 1.0
 # now each instance has a 1 in either USA, Europe or Japan value
 
 
-# splitting the data
-TRAIN_DATASET = dataset.sample(frac=0.8, random_state=0)
+# splitting the data, changed to sklearn way
+# general convention in ML programming - X is the data and y is what we are trying to predict
+X = dataset.drop(columns=["MPG"])
+y = dataset["MPG"]
 
-# exclude TRAIN DATA to create TEST DATA
-TEST_DATASET = dataset.drop(TRAIN_DATASET.index)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
-# making a graph
-sns.pairplot(TRAIN_DATASET[["MPG", "Cylinders", "Displacement", "Weight"]], diag_kind="kde")
-# plt.show()
-
-# general statistics
-TRAIN_STATS = TRAIN_DATASET.describe()
-# remove MPG as we are trying to guess it
-TRAIN_STATS.pop("MPG")
+# get the statistics
+TRAIN_STATS = X_train.describe()
+# making it prittier
 TRAIN_STATS = TRAIN_STATS.transpose()
-# print(TRAIN_STATS)
 
-NORMED_TRAIN_DATA = normalize(TRAIN_DATASET)
-NORMED_TEST_DATA = normalize(TEST_DATASET)
+# we want to normalize the data, so it is better for our model
+X_train = normalize(X_train)
+X_test = normalize(X_test)
+
+# model = build_model()
+
+EPOCHS = 1000
+# history = model.fit(X_train, y_train, epochs=EPOCHS, validation_split=0.2, verbose=1)
+# here we notice that before half of the training we get no better
+
+# we are going to use early stopping, which will stop the training of the model if it doesnt improove
+early_stop = keras.callbacks.EarlyStopping(monitor="val_loss", patience=10)
+model = build_model()
+
+history = model.fit(X_train, y_train, epochs=EPOCHS, validation_split=0.2, verbose=1, callbacks=[early_stop])
